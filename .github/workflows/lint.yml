@@ -1,34 +1,33 @@
-name: Lint Go Code
+---
+name: Lint
 
-on:
-  pull_request:
-    branches:
-      - main
+on: # yamllint disable-line rule:truthy
+  push: null
+  pull_request: null
+
+permissions: {}
 
 jobs:
-  lint:
-    name: Run Go Lint
+  build:
+    name: Lint
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/checkout@v4
         with:
-          go-version: '1.20'
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
 
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
-      - name: Run golangci-lint
-        run: golangci-lint run ./...
-
-      - name: Upload lint results (if any)
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: lint-results
-          path: ./golangci-lint-report.out
-
+      - name: Super-linter
+        uses: super-linter/super-linter@v7.0.0 # x-release-please-version
+        env:
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
